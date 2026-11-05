@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-namespace EmployeeContacts.Storage
+namespace _Project.Code.Storage
 {
     public enum StorageFile
     {

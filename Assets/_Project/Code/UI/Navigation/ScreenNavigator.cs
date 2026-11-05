@@ -1,9 +1,9 @@
 using System;
-using EmployeeContacts.Models;
+using _Project.Code.Models;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace EmployeeContacts.UI.Navigation
+namespace _Project.Code.UI.Navigation
 {
     public sealed class ScreenNavigator : MonoBehaviour
     {

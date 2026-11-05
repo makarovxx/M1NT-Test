@@ -1,10 +1,10 @@
 using System;
-using EmployeeContacts.Models;
+using _Project.Code.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace EmployeeContacts.UI.EmployeeList
+namespace _Project.Code.UI.EmployeeList
 {
     public sealed class EmployeeCardView : MonoBehaviour
     {
@@ -16,32 +16,55 @@ namespace EmployeeContacts.UI.EmployeeList
         [SerializeField] private TMP_Text detailsText;
         [SerializeField] private Sprite favoriteOnSprite;
         [SerializeField] private Sprite favoriteOffSprite;
-        private EmployeeData employee;
-        private Action<EmployeeData> favoriteRequested;
-        private Action<EmployeeData> profileRequested;
-        public int EmployeeId => employee == null ? 0 : employee.id;
+
+        private EmployeeData _employee;
+        private Action<EmployeeData> _favoriteRequested;
+        private Action<EmployeeData> _profileRequested;
+
+        public int EmployeeId => _employee == null ? 0 : _employee.id;
 
         private void Awake()
         {
-            favoriteButton.onClick.AddListener(() => favoriteRequested?.Invoke(employee));
-            profileButton.onClick.AddListener(() => profileRequested?.Invoke(employee));
+            favoriteButton.onClick.AddListener(HandleFavoriteButtonClicked);
+            profileButton.onClick.AddListener(HandleProfileButtonClicked);
         }
 
-        public void Bind(EmployeeData value, Sprite avatar, bool favorite, Action<EmployeeData> onFavorite,
-            Action<EmployeeData> onProfile)
+        private void OnDestroy()
         {
-            employee = value;
-            favoriteRequested = onFavorite;
-            profileRequested = onProfile;
+            favoriteButton.onClick.RemoveListener(HandleFavoriteButtonClicked);
+            profileButton.onClick.RemoveListener(HandleProfileButtonClicked);
+        }
+
+        public void Bind(
+            EmployeeData employee,
+            Sprite avatar,
+            bool isFavorite,
+            Action<EmployeeData> favoriteRequested,
+            Action<EmployeeData> profileRequested)
+        {
+            _employee = employee;
+            _favoriteRequested = favoriteRequested;
+            _profileRequested = profileRequested;
+
             avatarImage.sprite = avatar;
-            favoriteIcon.sprite = favorite ? favoriteOnSprite : favoriteOffSprite;
-            nameText.text = value.FullName;
-            detailsText.text = value.email + "   |   " + value.ip_address;
+            favoriteIcon.sprite = isFavorite ? favoriteOnSprite : favoriteOffSprite;
+            nameText.text = employee.FullName;
+            detailsText.text = $"{employee.email}   |   {employee.ip_address}";
         }
 
-        public void SetFavorite(bool value)
+        public void SetFavoriteState(bool isFavorite)
         {
-            if (employee != null) favoriteIcon.sprite = value ? favoriteOnSprite : favoriteOffSprite;
+            favoriteIcon.sprite = isFavorite ? favoriteOnSprite : favoriteOffSprite;
+        }
+
+        private void HandleFavoriteButtonClicked()
+        {
+            _favoriteRequested?.Invoke(_employee);
+        }
+
+        private void HandleProfileButtonClicked()
+        {
+            _profileRequested?.Invoke(_employee);
         }
     }
 }

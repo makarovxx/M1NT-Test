@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace EmployeeContacts.UI.Common
+namespace _Project.Code.UI.Common
 {
     [RequireComponent(typeof(RectTransform))]
     public sealed class SafeArea : MonoBehaviour

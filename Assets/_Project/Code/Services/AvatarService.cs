@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using EmployeeContacts.Models;
-using EmployeeContacts.Storage;
+using _Project.Code.Models;
+using _Project.Code.Storage;
 using UnityEngine;
 
-namespace EmployeeContacts.Services
+namespace _Project.Code.Services
 {
     public sealed class AvatarService
     {
@@ -16,6 +16,8 @@ namespace EmployeeContacts.Services
         private readonly AvatarAssignmentRepository _assignmentRepository;
         private readonly Texture2D _placeholderTexture;
         private readonly Dictionary<int, int> _assignments = new Dictionary<int, int>();
+        private readonly Dictionary<int, Sprite> _sprites = new Dictionary<int, Sprite>();
+        private Sprite _placeholderSprite;
 
         public AvatarService(
             LocalStorageService storage,
@@ -29,7 +31,6 @@ namespace EmployeeContacts.Services
             _placeholderTexture = placeholderTexture;
         }
 
-        public Texture2D PlaceholderTexture => _placeholderTexture;
         public string LastError { get; private set; }
 
         public async Task InitializeAsync(List<EmployeeData> employees)
@@ -53,14 +54,13 @@ namespace EmployeeContacts.Services
 
             var assignmentsChanged = false;
             var previousImageId = -1;
+            var random = new System.Random();
             for (var index = 0; index < employees.Count; index++)
             {
                 var employee = employees[index];
                 if (!_assignments.TryGetValue(employee.id, out var imageId))
                 {
-                    imageId = previousImageId >= 0
-                        ? (previousImageId + 1) % AvatarCount
-                        : index % AvatarCount;
+                    imageId = GetRandomImageId(random, previousImageId);
                     _assignments[employee.id] = imageId;
                     assignmentsChanged = true;
                 }
@@ -74,13 +74,56 @@ namespace EmployeeContacts.Services
             }
         }
 
-        public bool TryGetImageId(int employeeId, out int imageId)
+        private bool TryGetImageId(int employeeId, out int imageId)
         {
             return _assignments.TryGetValue(employeeId, out imageId);
         }
 
-        // A newly created texture belongs to the caller and must be destroyed when its UI element is recycled.
-        public Texture2D LoadAvatarTexture(int employeeId)
+        public Sprite GetSprite(int employeeId)
+        {
+            if (!TryGetImageId(employeeId, out var imageId))
+            {
+                return GetPlaceholderSprite();
+            }
+
+            if (_sprites.TryGetValue(imageId, out var sprite))
+            {
+                return sprite;
+            }
+
+            var texture = LoadAvatarTexture(employeeId);
+            sprite = CreateSprite(texture);
+            _sprites[imageId] = sprite;
+            return sprite;
+        }
+
+        public void Dispose()
+        {
+            foreach (var sprite in _sprites.Values)
+            {
+                if (sprite == null)
+                {
+                    continue;
+                }
+
+                var texture = sprite.texture;
+                UnityEngine.Object.Destroy(sprite);
+                if (texture != null && texture != _placeholderTexture)
+                {
+                    UnityEngine.Object.Destroy(texture);
+                }
+            }
+
+            _sprites.Clear();
+
+            if (_placeholderSprite != null)
+            {
+                UnityEngine.Object.Destroy(_placeholderSprite);
+                _placeholderSprite = null;
+            }
+        }
+
+        private Texture2D LoadAvatarTexture(int employeeId)
         {
             if (!_assignments.TryGetValue(employeeId, out var imageId)
                 || !_storage.TryReadImage(imageId, out var imageBytes)
@@ -121,6 +164,40 @@ namespace EmployeeContacts.Services
         private bool IsValidImageId(int imageId)
         {
             return imageId >= 0 && imageId < AvatarCount;
+        }
+
+        private int GetRandomImageId(System.Random random, int previousImageId)
+        {
+            var imageId = random.Next(AvatarCount - 1);
+            if (previousImageId >= 0 && imageId >= previousImageId)
+            {
+                imageId++;
+            }
+
+            return imageId;
+        }
+
+        private static Sprite CreateSprite(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return null;
+            }
+
+            return Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f));
+        }
+
+        private Sprite GetPlaceholderSprite()
+        {
+            if (_placeholderSprite == null)
+            {
+                _placeholderSprite = CreateSprite(_placeholderTexture);
+            }
+
+            return _placeholderSprite;
         }
     }
 }

@@ -1,26 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using EmployeeContacts.Models;
-using EmployeeContacts.Services;
+using _Project.Code.Models;
+using _Project.Code.Services;
 using UnityEngine;
 
-namespace EmployeeContacts.Storage
+namespace _Project.Code.Storage
 {
     public sealed class EmployeeRepository
     {
         private readonly LocalStorageService _storage;
         private readonly EmployeeDataDownloader _downloader;
-        private readonly List<EmployeeData> _employees = new List<EmployeeData>();
+        private readonly List<EmployeeData> _employees = new();
+
+        public List<EmployeeData> Employees => _employees;
+
+        public string LastError { get; private set; }
 
         public EmployeeRepository(LocalStorageService storage, EmployeeDataDownloader downloader)
         {
             _storage = storage;
             _downloader = downloader;
         }
-
-        public List<EmployeeData> Employees => _employees;
-        public string LastError { get; private set; }
 
         public async Task<List<EmployeeData>> LoadAsync()
         {

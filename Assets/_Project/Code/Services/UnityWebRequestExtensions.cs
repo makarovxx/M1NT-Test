@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.Networking;
 
-namespace EmployeeContacts.Services
+namespace _Project.Code.Services
 {
     internal static class UnityWebRequestExtensions
     {
@@ -9,8 +10,24 @@ namespace EmployeeContacts.Services
         {
             var completion = new TaskCompletionSource<bool>();
             var operation = request.SendWebRequest();
-            operation.completed += _ => completion.TrySetResult(true);
-            return completion.Task;
+            if (operation.isDone)
+            {
+                return Task.CompletedTask;
+            }
+
+            operation.completed += HandleRequestCompleted;
+            return WaitForCompletionAsync();
+
+            async Task WaitForCompletionAsync()
+            {
+                await completion.Task;
+                operation.completed -= HandleRequestCompleted;
+            }
+
+            void HandleRequestCompleted(AsyncOperation _)
+            {
+                completion.TrySetResult(true);
+            }
         }
     }
 }

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using EmployeeContacts.Models;
+using _Project.Code.Models;
 using UnityEngine;
 
-namespace EmployeeContacts.Storage
+namespace _Project.Code.Storage
 {
     public sealed class AvatarAssignmentRepository
     {

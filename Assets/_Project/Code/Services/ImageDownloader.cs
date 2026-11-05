@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace EmployeeContacts.Services
+namespace _Project.Code.Services
 {
     public sealed class ImageDownloader
     {

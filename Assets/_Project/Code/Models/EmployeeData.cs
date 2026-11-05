@@ -1,12 +1,11 @@
 using System;
 using System.Net;
 
-namespace EmployeeContacts.Models
+namespace _Project.Code.Models
 {
     [Serializable]
     public class EmployeeData
     {
-        // JsonUtility maps public fields by their exact JSON names.
         public int id;
         public string first_name;
         public string last_name;

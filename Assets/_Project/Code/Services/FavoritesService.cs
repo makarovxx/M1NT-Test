@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using EmployeeContacts.Models;
-using EmployeeContacts.Storage;
+using _Project.Code.Models;
+using _Project.Code.Storage;
 using UnityEngine;
 
-namespace EmployeeContacts.Services
+namespace _Project.Code.Services
 {
     public sealed class FavoritesService
     {
@@ -16,9 +16,7 @@ namespace EmployeeContacts.Services
             _repository = repository;
         }
 
-        public event Action FavoritesChanged;
-        public HashSet<int> FavoriteEmployeeIds => _favorites;
-
+        public event Action OnFavoritesChanged;
         public void Initialize(List<EmployeeData> employees)
         {
             _favorites.Clear();
@@ -61,25 +59,7 @@ namespace EmployeeContacts.Services
             }
 
             Save();
-            FavoritesChanged?.Invoke();
-        }
-
-        public void SetFavorite(int employeeId, bool isFavorite)
-        {
-            if (employeeId <= 0)
-            {
-                Debug.LogWarning("Cannot change favorite state for an invalid employee ID.");
-                return;
-            }
-
-            var changed = isFavorite ? _favorites.Add(employeeId) : _favorites.Remove(employeeId);
-            if (!changed)
-            {
-                return;
-            }
-
-            Save();
-            FavoritesChanged?.Invoke();
+            OnFavoritesChanged?.Invoke();
         }
 
         private void Save()

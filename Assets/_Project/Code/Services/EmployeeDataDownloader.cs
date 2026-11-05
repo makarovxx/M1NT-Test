@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine.Networking;
 
-namespace EmployeeContacts.Services
+namespace _Project.Code.Services
 {
     public sealed class EmployeeDataDownloader
     {

@@ -1,6 +1,6 @@
 using System;
 
-namespace EmployeeContacts.Models
+namespace _Project.Code.Models
 {
     [Serializable]
     public class EmployeeImageAssignmentsData

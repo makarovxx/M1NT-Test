@@ -1,13 +1,12 @@
-using EmployeeContacts.Composition;
-using EmployeeContacts.Models;
-using EmployeeContacts.UI.Common;
-using EmployeeContacts.UI.EmployeeList;
-using EmployeeContacts.UI.Navigation;
-using EmployeeContacts.UI.Profile;
+using _Project.Code.Composition;
+using _Project.Code.Models;
+using _Project.Code.UI.EmployeeList;
+using _Project.Code.UI.Navigation;
+using _Project.Code.UI.Profile;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace EmployeeContacts.UI
+namespace _Project.Code.UI
 {
     public sealed class EmployeeContactsAppController : MonoBehaviour
     {
@@ -17,87 +16,105 @@ namespace EmployeeContacts.UI
         [SerializeField] private ScreenNavigator navigator;
         [SerializeField] private Button employeesButton;
         [SerializeField] private Button favoritesButton;
-        private CompositionRoot root;
-        private AvatarSpriteProvider avatars;
-        private EmployeeListController employees;
-        private EmployeeListController favorites;
-        private EmployeeData profileEmployee;
-        private bool initialized;
+
+        private CompositionRoot _appServices;
+        private bool _isInitialized;
 
         private void OnEnable()
         {
-            root = CompositionRoot.Instance;
-            if (root != null) root.InitializationCompleted += Initialize;
+            _appServices = CompositionRoot.Instance;
+            if (_appServices != null)
+            {
+                _appServices.OnInitializationCompleted += Initialize;
+
+                if (_appServices.IsInitializationCompleted)
+                {
+                    Initialize();
+                }
+            }
         }
 
         private void OnDisable()
         {
-            if (root != null)
+            if (_appServices != null)
             {
-                root.InitializationCompleted -= Initialize;
-                if (initialized)
-                {
-                    root.FavoritesService.FavoritesChanged -= RefreshProfile;
-                    navigator.ProfileOpened -= ShowProfile;
-                    navigator.ListScreenChanged -= OnListChanged;
-                    profileView.FavoriteRequested -= ToggleFavorite;
-                    profileView.BackRequested -= navigator.CloseProfile;
-                    employeesButton.onClick.RemoveListener(navigator.ShowEmployees);
-                    favoritesButton.onClick.RemoveListener(navigator.ShowFavorites);
-                }
+                _appServices.OnInitializationCompleted -= Initialize;
             }
 
-            employees?.Dispose();
-            favorites?.Dispose();
-            avatars?.Dispose();
-            employees = null;
-            favorites = null;
-            avatars = null;
-            initialized = false;
+            DisposeViews();
         }
 
-        private void Start()
+        private void Initialize()
         {
-            if (root != null && root.IsInitialized) Initialize(true, null);
-        }
+            if (_isInitialized)
+            {
+                return;
+            }
 
-        private void Initialize(bool success, string message)
-        {
-            if (!success || initialized) return;
-            avatars = new AvatarSpriteProvider(root.AvatarService);
-            employees = new EmployeeListController(root, employeeDataView, avatars, false, navigator.OpenProfile);
-            favorites = new EmployeeListController(root, favoritesView, avatars, true, navigator.OpenProfile);
+            employeeDataView.Initialize(
+                _appServices.Employees,
+                _appServices.FavoritesService,
+                _appServices.AvatarService,
+                ContactListMode.All);
+            favoritesView.Initialize(
+                _appServices.Employees,
+                _appServices.FavoritesService,
+                _appServices.AvatarService,
+                ContactListMode.Favorites);
+            profileView.Initialize(_appServices.FavoritesService);
+
+            employeeDataView.OnProfileRequested += OpenProfile;
+            favoritesView.OnProfileRequested += OpenProfile;
             navigator.ProfileOpened += ShowProfile;
-            navigator.ListScreenChanged += OnListChanged;
-            profileView.FavoriteRequested += ToggleFavorite;
-            profileView.BackRequested += navigator.CloseProfile;
+            navigator.ListScreenChanged += ShowList;
+            profileView.OnBackRequested += navigator.CloseProfile;
             employeesButton.onClick.AddListener(navigator.ShowEmployees);
             favoritesButton.onClick.AddListener(navigator.ShowFavorites);
-            root.FavoritesService.FavoritesChanged += RefreshProfile;
-            initialized = true;
+
+            _isInitialized = true;
             navigator.ShowEmployees();
         }
 
-        private void OnListChanged(bool showFavorites)
+        private void DisposeViews()
         {
-            if (showFavorites) favorites.Show();
-            else employees.Show();
+            if (!_isInitialized)
+            {
+                return;
+            }
+
+            employeeDataView.OnProfileRequested -= OpenProfile;
+            favoritesView.OnProfileRequested -= OpenProfile;
+            navigator.ProfileOpened -= ShowProfile;
+            navigator.ListScreenChanged -= ShowList;
+            profileView.OnBackRequested -= navigator.CloseProfile;
+            employeesButton.onClick.RemoveListener(navigator.ShowEmployees);
+            favoritesButton.onClick.RemoveListener(navigator.ShowFavorites);
+
+            employeeDataView.Dispose();
+            favoritesView.Dispose();
+            profileView.Dispose();
+            _isInitialized = false;
+        }
+
+        private void OpenProfile(EmployeeData employee)
+        {
+            navigator.OpenProfile(employee);
         }
 
         private void ShowProfile(EmployeeData employee)
         {
-            profileEmployee = employee;
-            profileView.Show(employee, avatars.GetSprite(employee.id), root.FavoritesService.IsFavorite(employee.id));
+            profileView.Show(employee, _appServices.AvatarService.GetSprite(employee.id));
         }
 
-        private void ToggleFavorite(EmployeeData employee)
+        private void ShowList(bool showFavorites)
         {
-            root.FavoritesService.Toggle(employee.id);
-        }
+            if (showFavorites)
+            {
+                favoritesView.Show();
+                return;
+            }
 
-        private void RefreshProfile()
-        {
-            if (profileEmployee != null) ShowProfile(profileEmployee);
+            employeeDataView.Show();
         }
     }
 }
