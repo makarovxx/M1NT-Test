@@ -1,0 +1,17 @@
+using System;
+
+namespace EmployeeContacts.Models
+{
+    [Serializable]
+    public class EmployeeImageAssignmentsData
+    {
+        public EmployeeImageAssignment[] assignments;
+    }
+
+    [Serializable]
+    public class EmployeeImageAssignment
+    {
+        public int employeeId;
+        public int imageId;
+    }
+}
