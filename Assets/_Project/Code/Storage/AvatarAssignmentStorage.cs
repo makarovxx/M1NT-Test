@@ -5,11 +5,11 @@ using UnityEngine;
 
 namespace _Project.Code.Storage
 {
-    public sealed class AvatarAssignmentRepository
+    public sealed class AvatarAssignmentStorage
     {
-        private readonly LocalStorageService _storage;
+        private readonly LocalStorage _storage;
 
-        public AvatarAssignmentRepository(LocalStorageService storage)
+        public AvatarAssignmentStorage(LocalStorage storage)
         {
             _storage = storage;
         }
@@ -32,7 +32,7 @@ namespace _Project.Code.Storage
 
                 foreach (var assignment in data.assignments)
                 {
-                    if (assignment != null && assignment.employeeId > 0 && assignment.imageId >= 0)
+                    if (assignment is { employeeId: > 0 } && assignment.imageId >= 0)
                     {
                         assignments[assignment.employeeId] = assignment.imageId;
                     }
@@ -40,9 +40,9 @@ namespace _Project.Code.Storage
 
                 return assignments;
             }
-            catch (Exception exception)
+            catch (Exception e)
             {
-                Debug.LogWarning($"Could not deserialize local avatar assignments: {exception.Message}");
+                Debug.LogWarning($"Could not deserialize local avatar assignments: {e.Message}");
                 return new Dictionary<int, int>();
             }
         }

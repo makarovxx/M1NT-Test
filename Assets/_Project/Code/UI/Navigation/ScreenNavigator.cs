@@ -1,5 +1,4 @@
 using System;
-using _Project.Code.Models;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,39 +12,78 @@ namespace _Project.Code.UI.Navigation
         [SerializeField] private GameObject bottomNavigationPanel;
         [SerializeField] private Button employeeDataButton;
         [SerializeField] private Button favoritesButton;
-        private GameObject previousPanel;
-        public event Action<EmployeeData> ProfileOpened;
-        public event Action<bool> ListScreenChanged;
-        public void ShowEmployees() => ShowList(employeeDataPanel, false);
-        public void ShowFavorites() => ShowList(favoritesPanel, true);
 
-        public void OpenProfile(EmployeeData employee)
+        private EmployeeListScreen _currentListScreen = EmployeeListScreen.AllEmployees;
+        
+        public event Action<EmployeeListScreen> OnListScreenChanged;
+
+        public void Initialize(EmployeeListScreen currentListScreen)
         {
-            previousPanel = employeeDataPanel.activeSelf ? employeeDataPanel : favoritesPanel;
+            ShowList(currentListScreen);
+            _currentListScreen = currentListScreen;
+        }
+
+        private void OnEnable()
+        {
+            employeeDataButton.onClick.AddListener(ShowEmployees);
+            favoritesButton.onClick.AddListener(ShowFavorites);
+        }
+
+        private void OnDisable()
+        {
+            employeeDataButton.onClick.RemoveListener(ShowEmployees);
+            favoritesButton.onClick.RemoveListener(ShowFavorites);
+        }
+
+        public void ShowProfile()
+        {
+            if (profilePanel.activeSelf)
+            {
+                return;
+            }
+
             employeeDataPanel.SetActive(false);
             favoritesPanel.SetActive(false);
             profilePanel.SetActive(true);
             bottomNavigationPanel.SetActive(false);
-            ProfileOpened?.Invoke(employee);
         }
 
         public void CloseProfile()
         {
+            if (!profilePanel.activeSelf)
+            {
+                return;
+            }
+
             profilePanel.SetActive(false);
-            previousPanel.SetActive(true);
             bottomNavigationPanel.SetActive(true);
-            ListScreenChanged?.Invoke(previousPanel == favoritesPanel);
+            ShowList(_currentListScreen);
         }
 
-        private void ShowList(GameObject active, bool favorites)
+        private void ShowEmployees()
         {
-            employeeDataPanel.SetActive(active == employeeDataPanel);
-            favoritesPanel.SetActive(active == favoritesPanel);
+            ShowList(EmployeeListScreen.AllEmployees);
+        }
+
+        private void ShowFavorites()
+        {
+            ShowList(EmployeeListScreen.Favorites);
+        }
+
+        public void ShowList(EmployeeListScreen screen)
+        {
+            _currentListScreen = screen;
+            var showFavorites = screen == EmployeeListScreen.Favorites;
+
+            employeeDataPanel.SetActive(!showFavorites);
+            favoritesPanel.SetActive(showFavorites);
             profilePanel.SetActive(false);
             bottomNavigationPanel.SetActive(true);
-            employeeDataButton.interactable = favorites;
-            favoritesButton.interactable = !favorites;
-            ListScreenChanged?.Invoke(favorites);
+
+            employeeDataButton.interactable = showFavorites;
+            favoritesButton.interactable = !showFavorites;
+
+            OnListScreenChanged?.Invoke(screen);
         }
     }
 }

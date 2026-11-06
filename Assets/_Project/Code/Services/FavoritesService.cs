@@ -2,31 +2,25 @@ using System;
 using System.Collections.Generic;
 using _Project.Code.Models;
 using _Project.Code.Storage;
-using UnityEngine;
 
 namespace _Project.Code.Services
 {
     public sealed class FavoritesService
     {
-        private readonly FavoritesRepository _repository;
-        private readonly HashSet<int> _favorites = new HashSet<int>();
-
-        public FavoritesService(FavoritesRepository repository)
-        {
-            _repository = repository;
-        }
+        private readonly FavoritesStorage _favoritesStorage;
+        private readonly HashSet<int> _favorites = new();
 
         public event Action OnFavoritesChanged;
+
+        public FavoritesService(FavoritesStorage favoritesStorage)
+        {
+            _favoritesStorage = favoritesStorage;
+        }
+
         public void Initialize(List<EmployeeData> employees)
         {
             _favorites.Clear();
-            _favorites.UnionWith(_repository.Load());
-
-            // Do not remove saved IDs while employee data is unavailable offline.
-            if (employees == null || employees.Count == 0)
-            {
-                return;
-            }
+            _favorites.UnionWith(_favoritesStorage.Load());
 
             var validIds = new HashSet<int>();
             foreach (var employee in employees)
@@ -47,12 +41,6 @@ namespace _Project.Code.Services
 
         public void Toggle(int employeeId)
         {
-            if (employeeId <= 0)
-            {
-                Debug.LogWarning("Cannot change favorite state for an invalid employee ID.");
-                return;
-            }
-
             if (!_favorites.Add(employeeId))
             {
                 _favorites.Remove(employeeId);
@@ -64,10 +52,7 @@ namespace _Project.Code.Services
 
         private void Save()
         {
-            if (!_repository.Save(_favorites))
-            {
-                Debug.LogWarning("Favorites changed in memory but could not be saved locally.");
-            }
+            _favoritesStorage.Save(_favorites);
         }
     }
 }

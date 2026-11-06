@@ -21,7 +21,7 @@ namespace _Project.Code.UI.EmployeeList
         private Action<EmployeeData> _favoriteRequested;
         private Action<EmployeeData> _profileRequested;
 
-        public int EmployeeId => _employee == null ? 0 : _employee.id;
+        public int EmployeeId => _employee?.id ?? 0;
 
         private void Awake()
         {
@@ -35,10 +35,7 @@ namespace _Project.Code.UI.EmployeeList
             profileButton.onClick.RemoveListener(HandleProfileButtonClicked);
         }
 
-        public void Bind(
-            EmployeeData employee,
-            Sprite avatar,
-            bool isFavorite,
+        public void Bind(EmployeeData employee, Sprite avatar, bool isFavorite, 
             Action<EmployeeData> favoriteRequested,
             Action<EmployeeData> profileRequested)
         {
@@ -48,7 +45,7 @@ namespace _Project.Code.UI.EmployeeList
 
             avatarImage.sprite = avatar;
             favoriteIcon.sprite = isFavorite ? favoriteOnSprite : favoriteOffSprite;
-            nameText.text = employee.FullName;
+            nameText.text = $"{employee.first_name} {employee.last_name}";
             detailsText.text = $"{employee.email}   |   {employee.ip_address}";
         }
 

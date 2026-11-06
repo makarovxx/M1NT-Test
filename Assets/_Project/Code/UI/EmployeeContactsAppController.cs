@@ -1,120 +1,76 @@
-using _Project.Code.Composition;
 using _Project.Code.Models;
+using _Project.Code.Services;
 using _Project.Code.UI.EmployeeList;
 using _Project.Code.UI.Navigation;
 using _Project.Code.UI.Profile;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace _Project.Code.UI
 {
     public sealed class EmployeeContactsAppController : MonoBehaviour
     {
-        [SerializeField] private EmployeeListView employeeDataView;
-        [SerializeField] private EmployeeListView favoritesView;
-        [SerializeField] private ProfileView profileView;
-        [SerializeField] private ScreenNavigator navigator;
-        [SerializeField] private Button employeesButton;
-        [SerializeField] private Button favoritesButton;
+        private readonly EmployeeListScreen _initialListScreen = EmployeeListScreen.AllEmployees;
+        private AllEmployeesListView _employeeDataView;
+        private FavoriteEmployeesListView _favoritesView;
+        private ProfileView _profileView;
+        private ScreenNavigator _navigator;
+        private AvatarService _avatars;
 
-        private CompositionRoot _appServices;
-        private bool _isInitialized;
-
-        private void OnEnable()
+        public void Initialize(AllEmployeesListView employeeDataView, FavoriteEmployeesListView favoritesView,
+            ProfileView profileView, ScreenNavigator navigator, AvatarService avatars)
         {
-            _appServices = CompositionRoot.Instance;
-            if (_appServices != null)
-            {
-                _appServices.OnInitializationCompleted += Initialize;
+            _employeeDataView = employeeDataView;
+            _favoritesView = favoritesView;
+            _profileView = profileView;
+            _navigator = navigator;
+            _avatars = avatars;
 
-                if (_appServices.IsInitializationCompleted)
-                {
-                    Initialize();
-                }
-            }
+            _employeeDataView.OnProfileRequested += HandleProfileRequested;
+            _favoritesView.OnProfileRequested += HandleProfileRequested;
+            _profileView.OnBackButtonClick += HandleBackButtonClick;
+            _navigator.OnListScreenChanged += HandleListScreenChanged;
+
+            _navigator.Initialize(_initialListScreen);
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
-            if (_appServices != null)
-            {
-                _appServices.OnInitializationCompleted -= Initialize;
-            }
+            _employeeDataView.OnProfileRequested -= HandleProfileRequested;
+            _favoritesView.OnProfileRequested -= HandleProfileRequested;
+            _profileView.OnBackButtonClick -= HandleBackButtonClick;
+            _navigator.OnListScreenChanged -= HandleListScreenChanged;
 
-            DisposeViews();
+            _employeeDataView.Dispose();
+            _favoritesView.Dispose();
+            _profileView.Dispose();
+
+            _employeeDataView = null;
+            _favoritesView = null;
+            _profileView = null;
+            _navigator = null;
+            _avatars = null;
         }
 
-        private void Initialize()
+        private void HandleProfileRequested(EmployeeData employee)
         {
-            if (_isInitialized)
+            _profileView.Show(employee, _avatars.GetSprite(employee.id));
+            _navigator.ShowProfile();
+        }
+
+        private void HandleBackButtonClick()
+        {
+            _navigator.CloseProfile();
+        }
+
+        private void HandleListScreenChanged(EmployeeListScreen screen)
+        {
+            if (screen == EmployeeListScreen.Favorites)
             {
+                _favoritesView.Show();
                 return;
             }
 
-            employeeDataView.Initialize(
-                _appServices.Employees,
-                _appServices.FavoritesService,
-                _appServices.AvatarService,
-                ContactListMode.All);
-            favoritesView.Initialize(
-                _appServices.Employees,
-                _appServices.FavoritesService,
-                _appServices.AvatarService,
-                ContactListMode.Favorites);
-            profileView.Initialize(_appServices.FavoritesService);
-
-            employeeDataView.OnProfileRequested += OpenProfile;
-            favoritesView.OnProfileRequested += OpenProfile;
-            navigator.ProfileOpened += ShowProfile;
-            navigator.ListScreenChanged += ShowList;
-            profileView.OnBackRequested += navigator.CloseProfile;
-            employeesButton.onClick.AddListener(navigator.ShowEmployees);
-            favoritesButton.onClick.AddListener(navigator.ShowFavorites);
-
-            _isInitialized = true;
-            navigator.ShowEmployees();
-        }
-
-        private void DisposeViews()
-        {
-            if (!_isInitialized)
-            {
-                return;
-            }
-
-            employeeDataView.OnProfileRequested -= OpenProfile;
-            favoritesView.OnProfileRequested -= OpenProfile;
-            navigator.ProfileOpened -= ShowProfile;
-            navigator.ListScreenChanged -= ShowList;
-            profileView.OnBackRequested -= navigator.CloseProfile;
-            employeesButton.onClick.RemoveListener(navigator.ShowEmployees);
-            favoritesButton.onClick.RemoveListener(navigator.ShowFavorites);
-
-            employeeDataView.Dispose();
-            favoritesView.Dispose();
-            profileView.Dispose();
-            _isInitialized = false;
-        }
-
-        private void OpenProfile(EmployeeData employee)
-        {
-            navigator.OpenProfile(employee);
-        }
-
-        private void ShowProfile(EmployeeData employee)
-        {
-            profileView.Show(employee, _appServices.AvatarService.GetSprite(employee.id));
-        }
-
-        private void ShowList(bool showFavorites)
-        {
-            if (showFavorites)
-            {
-                favoritesView.Show();
-                return;
-            }
-
-            employeeDataView.Show();
+            _employeeDataView.Show();
         }
     }
 }

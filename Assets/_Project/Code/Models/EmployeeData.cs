@@ -1,5 +1,4 @@
 using System;
-using System.Net;
 
 namespace _Project.Code.Models
 {
@@ -12,18 +11,5 @@ namespace _Project.Code.Models
         public string email;
         public string gender;
         public string ip_address;
-
-        public string FullName => $"{first_name} {last_name}";
-
-        public bool IsValid()
-        {
-            return id > 0
-                && !string.IsNullOrWhiteSpace(first_name)
-                && !string.IsNullOrWhiteSpace(last_name)
-                && !string.IsNullOrWhiteSpace(email)
-                && email.Contains("@")
-                && !string.IsNullOrWhiteSpace(gender)
-                && IPAddress.TryParse(ip_address, out _);
-        }
     }
 }

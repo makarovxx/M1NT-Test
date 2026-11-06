@@ -124,17 +124,24 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3395411295337538634, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
   m_PrefabInstance: {fileID: 3089327623560813112}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &156059785 stripped
+--- !u!114 &156059789
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7752362145250849739, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
-  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 156059783}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f690cda02c700a498cc2536b5b7bc85, type: 3}
+  m_Script: {fileID: 11500000, guid: 55337c5faeb0439699b7741c8225d5ca, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EmployeeContacts.UI.EmployeeList.EmployeeListView
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Code.UI.EmployeeList.FavoriteEmployeesListView
+  scrollRect: {fileID: 638901500}
+  cardsRoot: {fileID: 924020931}
+  employeeCardPrefab: {fileID: 7455487970189123302, guid: fcbd7a3a3db2132418a33aff97862941, type: 3}
+  emptyText: {fileID: 1955347504}
+  batchSize: 20
+  bottomThreshold: 0.1
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,7 +292,7 @@ GameObject:
   - component: {fileID: 529665636}
   - component: {fileID: 529665635}
   m_Layer: 0
-  m_Name: App
+  m_Name: '*APP*'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -321,12 +328,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaf99f7e7a3e8df469e3c131f69e82ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EmployeeContacts.UI.EmployeeContactsAppController
-  employeeDataView: {fileID: 1517626222}
-  favoritesView: {fileID: 156059785}
-  profileView: {fileID: 1290613100940653127}
-  navigator: {fileID: 529665635}
-  employeesButton: {fileID: 4301163043960283931}
-  favoritesButton: {fileID: 6682974468618347958}
 --- !u!114 &529665637
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -339,7 +340,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb4e4a134f0224842969e797076b9688, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EmployeeContacts.Composition.CompositionRoot
-  avatarPlaceholder: {fileID: 2800000, guid: 41ee6e611e9e5534990e10e98ce444bd, type: 3}
+  applicationController: {fileID: 529665636}
+  employeeDataView: {fileID: 1517626226}
+  favoritesView: {fileID: 156059789}
+  profileView: {fileID: 1290613100940653127}
+  screenNavigator: {fileID: 529665635}
 --- !u!4 &529665638
 Transform:
   m_ObjectHideFlags: 0
@@ -439,22 +444,83 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &638901500 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9190450080230908194, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ScrollRect
+--- !u!224 &707756924 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2130397594323750967, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &719092184 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 981888272584099039, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!224 &924020931 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6582605170765612885, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1412501858 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4125759544561137216, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aa08ab6e0800fa44ae55d278d1423e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ScrollRect
 --- !u!1 &1517626220 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7625791815011054376, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
   m_PrefabInstance: {fileID: 3089327623560813112}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1517626222 stripped
+--- !u!114 &1517626226
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3269403983805768873, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
-  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1517626220}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f690cda02c700a498cc2536b5b7bc85, type: 3}
+  m_Script: {fileID: 11500000, guid: c97a63cddbef422f8616e1029bb169ab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EmployeeContacts.UI.EmployeeList.EmployeeListView
+  m_EditorClassIdentifier: Assembly-CSharp::_Project.Code.UI.EmployeeList.AllEmployeesListView
+  scrollRect: {fileID: 1412501858}
+  cardsRoot: {fileID: 707756924}
+  employeeCardPrefab: {fileID: 7455487970189123302, guid: fcbd7a3a3db2132418a33aff97862941, type: 3}
+  emptyText: {fileID: 719092184}
+  batchSize: 20
+  bottomThreshold: 0.1
+--- !u!114 &1955347504 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5434424161690620861, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+  m_PrefabInstance: {fileID: 3089327623560813112}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &2104552680
 GameObject:
   m_ObjectHideFlags: 0
@@ -563,9 +629,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1014020812460277431, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2130397594323750967, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5248993037785098709, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5434424161690620861, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_text
+      value: No favorite employees
       objectReference: {fileID: 0}
     - target: {fileID: 6068191548525944483, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
       propertyPath: m_Name
@@ -651,10 +729,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 7874757339558333468, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 5.0000153
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 3269403983805768873, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+    - {fileID: 7752362145250849739, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7625791815011054376, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1517626226}
+    - targetCorrespondingSourceObject: {fileID: 3395411295337538634, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 156059789}
   m_SourcePrefab: {fileID: 100100000, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
 --- !u!114 &4301163043960283931 stripped
 MonoBehaviour:
@@ -685,5 +775,5 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 2104552683}
-  - {fileID: 3089327623560813112}
   - {fileID: 529665638}
+  - {fileID: 3089327623560813112}

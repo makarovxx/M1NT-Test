@@ -4,6 +4,10 @@ using System.Threading.Tasks;
 using _Project.Code.Models;
 using _Project.Code.Services;
 using _Project.Code.Storage;
+using _Project.Code.UI;
+using _Project.Code.UI.EmployeeList;
+using _Project.Code.UI.Navigation;
+using _Project.Code.UI.Profile;
 using UnityEngine;
 
 namespace _Project.Code.Composition
@@ -11,95 +15,66 @@ namespace _Project.Code.Composition
     [DefaultExecutionOrder(-1000)]
     public sealed class CompositionRoot : MonoBehaviour
     {
-        [SerializeField] private Texture2D avatarPlaceholder;
+        [SerializeField] private EmployeeContactsAppController applicationController;
+        [SerializeField] private AllEmployeesListView employeeDataView;
+        [SerializeField] private FavoriteEmployeesListView favoritesView;
+        [SerializeField] private ProfileView profileView;
+        [SerializeField] private ScreenNavigator screenNavigator;
 
-        private Task _initializationTask;
-
-        public static CompositionRoot Instance { get; private set; }
-        public EmployeeRepository EmployeeRepository { get; private set; }
-        public AvatarService AvatarService { get; private set; }
-        public FavoritesService FavoritesService { get; private set; }
-        public List<EmployeeData> Employees => EmployeeRepository.Employees;
-        public bool IsInitialized { get; private set; }
-        public bool IsInitializationCompleted { get; private set; }
-        public string InitializationMessage { get; private set; }
-
-        public event Action OnInitializationCompleted;
+        private AvatarService _avatarService;
+        private EmployeeDataService _employeeDataService;
+        private FavoritesService _favoritesService;
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-            CreateDependencies();
+            ComposeApplication();
         }
 
         private async void Start()
         {
-            await InitializeAsync();
-        }
-
-        private Task InitializeAsync()
-        {
-            if (_initializationTask == null)
-            {
-                _initializationTask = InitializeInternalAsync();
-            }
-
-            return _initializationTask;
+            await InitializeApplicationAsync();
         }
 
         private void OnDestroy()
         {
-            AvatarService?.Dispose();
-
-            if (Instance == this)
-            {
-                Instance = null;
-            }
+            _avatarService?.Dispose();
         }
 
-        private void CreateDependencies()
+        private void ComposeApplication()
         {
-            var storage = new LocalStorageService();
-            EmployeeRepository = new EmployeeRepository(storage, new EmployeeDataDownloader());
-            AvatarService = new AvatarService(
-                storage,
-                new ImageDownloader(),
-                new AvatarAssignmentRepository(storage),
-                avatarPlaceholder);
-            FavoritesService = new FavoritesService(new FavoritesRepository(storage));
+            var localStorage = new LocalStorage();
+            var apiClient = new ApiClient();
+
+            var favoritesStorage = new FavoritesStorage(localStorage);
+            var avatarAssignmentStorage = new AvatarAssignmentStorage(localStorage);
+
+            _employeeDataService = new EmployeeDataService(localStorage, apiClient);
+            _favoritesService = new FavoritesService(favoritesStorage);
+            _avatarService = new AvatarService(localStorage, apiClient, avatarAssignmentStorage);
         }
 
-        private async Task InitializeInternalAsync()
+        private async Task InitializeApplicationAsync()
         {
+            var employees = new List<EmployeeData>();
+
             try
             {
-                var employees = await EmployeeRepository.LoadAsync();
-                await AvatarService.InitializeAsync(employees);
-                FavoritesService.Initialize(employees);
-
-                IsInitialized = employees.Count > 0;
-                IsInitializationCompleted = true;
-                var message = IsInitialized
-                    ? null
-                    : EmployeeRepository.LastError ?? "No employee data is available.";
-                InitializationMessage = message;
-                OnInitializationCompleted?.Invoke();
+                employees = await _employeeDataService.LoadAsync();
+                await _avatarService.InitializeAsync(employees);
+                _favoritesService.Initialize(employees);
             }
             catch (Exception exception)
             {
-                IsInitialized = false;
-                IsInitializationCompleted = true;
-                var message = $"Application initialization failed: {exception.Message}";
-                InitializationMessage = message;
-                Debug.LogError(message);
-                OnInitializationCompleted?.Invoke();
+                Debug.LogError($"Application initialization failed: {exception.Message}");
+                _favoritesService.Initialize(employees);
             }
+
+            employeeDataView.Initialize(employees, _favoritesService, _avatarService);
+            favoritesView.Initialize(employees, _favoritesService, _avatarService);
+            profileView.Initialize(_favoritesService);
+
+            applicationController.Initialize(employeeDataView, favoritesView, profileView, screenNavigator,
+                _avatarService);
         }
     }
 }

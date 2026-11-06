@@ -23,7 +23,15 @@ namespace _Project.Code.UI.Profile
         private FavoritesService _favorites;
         private EmployeeData _employee;
 
-        public event Action OnBackRequested;
+        public event Action OnBackButtonClick;
+
+        public void Initialize(FavoritesService favorites)
+        {
+            Dispose();
+
+            _favorites = favorites;
+            _favorites.OnFavoritesChanged += RefreshFavoriteState;
+        }
 
         private void Awake()
         {
@@ -38,19 +46,11 @@ namespace _Project.Code.UI.Profile
             Dispose();
         }
 
-        public void Initialize(FavoritesService favorites)
-        {
-            Dispose();
-
-            _favorites = favorites;
-            _favorites.OnFavoritesChanged += RefreshFavoriteState;
-        }
-
         public void Show(EmployeeData employee, Sprite avatar)
         {
             _employee = employee;
             avatarImage.sprite = avatar;
-            nameText.text = employee.FullName;
+            nameText.text = $"{employee.first_name} {employee.last_name}";
             genderText.text = $"Gender: {employee.gender}";
             emailText.text = employee.email;
             ipText.text = employee.ip_address;
@@ -80,7 +80,7 @@ namespace _Project.Code.UI.Profile
 
         private void HandleBackButtonClicked()
         {
-            OnBackRequested?.Invoke();
+            OnBackButtonClick?.Invoke();
         }
 
         private void RefreshFavoriteState()

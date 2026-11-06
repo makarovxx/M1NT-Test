@@ -4,45 +4,29 @@ using UnityEngine;
 
 namespace _Project.Code.Storage
 {
-    public enum StorageFile
+    public sealed class LocalStorage
     {
-        Employees,
-        Favorites,
-        EmployeeImageAssignments
-    }
-
-    public sealed class LocalStorageService
-    {
-        private const string EmployeesFileName = "employees.json";
-        private const string FavoritesFileName = "favorites.json";
-        private const string AssignmentsFileName = "employee_images.json";
-        private const string ImagesDirectoryName = "images";
+        private const string EmployeesFile = "employees.json";
+        private const string FavoritesFile = "favorites.json";
+        private const string AssignmentsFile = "employee_images.json";
+        private const string ImagesDirectory = "images";
         private const string ImageFilePrefix = "image_";
         private const string ImageFileExtension = ".jpg";
-
         private readonly string _rootPath;
 
-        public LocalStorageService(string rootPath = null)
+        public LocalStorage(string rootPath = null)
         {
             _rootPath = string.IsNullOrWhiteSpace(rootPath) ? GetDefaultRootPath() : rootPath;
-        }
-
-        public string RootPath => _rootPath;
-
-        public string GetImagePath(int imageId)
-        {
-            return Path.Combine(_rootPath, ImagesDirectoryName, ImageFilePrefix + imageId + ImageFileExtension);
         }
 
         public bool TryReadText(StorageFile file, out string content)
         {
             content = null;
+
             var path = GetPath(file);
 
             if (!File.Exists(path))
-            {
                 return false;
-            }
 
             try
             {
@@ -51,7 +35,7 @@ namespace _Project.Code.Storage
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"Could not read local file '{path}': {exception.Message}");
+                Debug.LogWarning($"Failed to read file '{path}': {exception.Message}");
                 return false;
             }
         }
@@ -59,21 +43,19 @@ namespace _Project.Code.Storage
         public bool TryWriteText(StorageFile file, string content)
         {
             if (string.IsNullOrWhiteSpace(content))
-            {
-                Debug.LogWarning($"Refused to save an empty '{file}' file.");
                 return false;
-            }
 
             var path = GetPath(file);
+
             try
             {
-                EnsureDirectory(Path.GetDirectoryName(path));
+                Directory.CreateDirectory(_rootPath);
                 File.WriteAllText(path, content);
                 return true;
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"Could not save local file '{path}': {exception.Message}");
+                Debug.LogWarning($"Failed to save file '{path}': {exception.Message}");
                 return false;
             }
         }
@@ -81,12 +63,11 @@ namespace _Project.Code.Storage
         public bool TryReadImage(int imageId, out byte[] bytes)
         {
             bytes = null;
+
             var path = GetImagePath(imageId);
 
             if (!File.Exists(path))
-            {
                 return false;
-            }
 
             try
             {
@@ -95,7 +76,7 @@ namespace _Project.Code.Storage
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"Could not read avatar '{path}': {exception.Message}");
+                Debug.LogWarning($"Failed to read image {imageId}: {exception.Message}");
                 return false;
             }
         }
@@ -103,52 +84,54 @@ namespace _Project.Code.Storage
         public bool TryWriteImage(int imageId, byte[] bytes)
         {
             if (bytes == null || bytes.Length == 0)
-            {
-                Debug.LogWarning($"Refused to save an empty avatar with image ID {imageId}.");
                 return false;
-            }
 
             var path = GetImagePath(imageId);
+
             try
             {
-                EnsureDirectory(Path.GetDirectoryName(path));
+                Directory.CreateDirectory(Path.Combine(_rootPath, ImagesDirectory));
                 File.WriteAllBytes(path, bytes);
                 return true;
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"Could not save avatar '{path}': {exception.Message}");
+                Debug.LogWarning($"Failed to save image {imageId}: {exception.Message}");
                 return false;
             }
         }
 
         private string GetPath(StorageFile file)
         {
+            string fileName;
             switch (file)
             {
                 case StorageFile.Employees:
-                    return Path.Combine(_rootPath, EmployeesFileName);
+                    fileName = EmployeesFile;
+                    break;
                 case StorageFile.Favorites:
-                    return Path.Combine(_rootPath, FavoritesFileName);
+                    fileName = FavoritesFile;
+                    break;
                 case StorageFile.EmployeeImageAssignments:
-                    return Path.Combine(_rootPath, AssignmentsFileName);
+                    fileName = AssignmentsFile;
+                    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(file), file, "Unknown storage file.");
+                    throw new ArgumentOutOfRangeException(nameof(file));
             }
+
+            return Path.Combine(_rootPath, fileName);
         }
 
-        private static void EnsureDirectory(string path)
+        private string GetImagePath(int imageId)
         {
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
+            return Path.Combine(_rootPath, ImagesDirectory, $"{ImageFilePrefix}{imageId}{ImageFileExtension}");
         }
 
-        private static string GetDefaultRootPath()
+        private string GetDefaultRootPath()
         {
 #if UNITY_EDITOR
-            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "LocalData"));
+            return Path.GetFullPath(
+                Path.Combine(Application.dataPath, "..", "LocalData"));
 #else
             return Application.persistentDataPath;
 #endif

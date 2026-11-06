@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace _Project.Code.UI.EmployeeList
 {
-    public sealed class EmployeeListView : MonoBehaviour
+    public abstract class EmployeeListViewBase : MonoBehaviour
     {
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private Transform cardsRoot;
@@ -19,16 +19,20 @@ namespace _Project.Code.UI.EmployeeList
 
         private readonly List<EmployeeCardView> _cards = new List<EmployeeCardView>();
         private readonly List<EmployeeData> _displayedEmployees = new List<EmployeeData>();
-
+        private List<EmployeeData> _employees;
         private FavoritesService _favorites;
         private AvatarService _avatars;
-        private List<EmployeeData> _employees;
-        private ContactListMode _mode;
         private int _nextEmployeeIndex;
-        private bool _isLoading;
         private bool _isInitialized;
+        private bool _isLoading;
 
         public event Action<EmployeeData> OnProfileRequested;
+
+        protected FavoritesService Favorites => _favorites;
+
+        protected abstract bool ShouldDisplay(EmployeeData employee);
+        protected virtual bool RebuildWhenFavoritesChanged => false;
+        protected virtual bool RebuildWhenShow => false;
 
         private void Awake()
         {
@@ -44,32 +48,15 @@ namespace _Project.Code.UI.EmployeeList
         public void Initialize(
             List<EmployeeData> employees,
             FavoritesService favorites,
-            AvatarService avatars,
-            ContactListMode mode)
+            AvatarService avatars)
         {
             Dispose();
 
             _employees = employees;
             _favorites = favorites;
             _avatars = avatars;
-            _mode = mode;
             _favorites.OnFavoritesChanged += HandleFavoritesChanged;
             _isInitialized = true;
-        }
-
-        public void Show()
-        {
-            if (!_isInitialized)
-            {
-                return;
-            }
-
-            if (_mode == ContactListMode.Favorites || _cards.Count == 0)
-            {
-                Rebuild();
-            }
-
-            gameObject.SetActive(true);
         }
 
         public void Dispose()
@@ -86,6 +73,21 @@ namespace _Project.Code.UI.EmployeeList
             ClearCards();
         }
 
+        public void Show()
+        {
+            if (!_isInitialized)
+            {
+                return;
+            }
+
+            if (_cards.Count == 0 || RebuildWhenShow)
+            {
+                Rebuild();
+            }
+
+            gameObject.SetActive(true);
+        }
+
         private void HandleScrollChanged(Vector2 position)
         {
             if (_isLoading || _nextEmployeeIndex >= _displayedEmployees.Count || position.y > bottomThreshold)
@@ -98,9 +100,13 @@ namespace _Project.Code.UI.EmployeeList
 
         private void HandleFavoritesChanged()
         {
-            if (_mode == ContactListMode.Favorites)
+            if (RebuildWhenFavoritesChanged)
             {
-                Rebuild();
+                if (gameObject.activeInHierarchy)
+                {
+                    Rebuild();
+                }
+
                 return;
             }
 
@@ -116,9 +122,6 @@ namespace _Project.Code.UI.EmployeeList
             CollectEmployees();
 
             var isEmpty = _displayedEmployees.Count == 0;
-            emptyText.text = _mode == ContactListMode.Favorites
-                ? "No favorite employees yet"
-                : "No employee data available";
             emptyText.gameObject.SetActive(isEmpty);
             scrollRect.gameObject.SetActive(!isEmpty);
 
@@ -134,7 +137,6 @@ namespace _Project.Code.UI.EmployeeList
         private void CollectEmployees()
         {
             _displayedEmployees.Clear();
-
             if (_employees == null)
             {
                 return;
@@ -142,7 +144,7 @@ namespace _Project.Code.UI.EmployeeList
 
             foreach (var employee in _employees)
             {
-                if (_mode == ContactListMode.All || _favorites.IsFavorite(employee.id))
+                if (ShouldDisplay(employee))
                 {
                     _displayedEmployees.Add(employee);
                 }
@@ -158,12 +160,12 @@ namespace _Project.Code.UI.EmployeeList
             {
                 var employee = _displayedEmployees[_nextEmployeeIndex];
                 var card = Instantiate(employeeCardPrefab, cardsRoot);
-                card.Bind(
-                    employee,
+                card.Bind(employee,
                     _avatars.GetSprite(employee.id),
                     _favorites.IsFavorite(employee.id),
                     HandleFavoriteRequested,
                     HandleProfileRequested);
+
                 _cards.Add(card);
                 _nextEmployeeIndex++;
             }
