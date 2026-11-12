@@ -18,9 +18,10 @@ namespace _Project.Code.UI.EmployeeList
         [SerializeField] private TMP_Text emptyText;
 
         [SerializeField, Min(0f)] private float spacingBetweenItems = 20f;
-        [SerializeField, Min(0f)] private float topPadding = 250f;
-        [SerializeField, Min(0f)] private float bottomPadding = 250f;
+        [SerializeField, Min(0f)] private float topPadding = 50f;
+        [SerializeField, Min(0f)] private float bottomPadding = 50f;
         [SerializeField, Min(0)] private int bufferSize = 2;
+        [SerializeField, Min(7)] private int countVisibleCardsView = 12;
 
         private readonly List<EmployeeCardView> _cardsViews = new();
         private readonly List<EmployeeData> _displayedEmployees = new();
@@ -83,7 +84,7 @@ namespace _Project.Code.UI.EmployeeList
             float viewportHeight = scrollRect.viewport.rect.height;
             float itemSpace = CardHeight + spacingBetweenItems;
             int visibleCardCount = Mathf.Max(1, Mathf.CeilToInt((viewportHeight + spacingBetweenItems) / itemSpace));
-            int requiredCardCount = visibleCardCount + bufferSize * 2;
+            int requiredCardCount = countVisibleCardsView + bufferSize * 2;
 
             CreatePool(requiredCardCount);
         }
