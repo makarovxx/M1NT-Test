@@ -10,21 +10,25 @@ namespace _Project.Code.UI.EmployeeList
 {
     public abstract class EmployeeListViewBase : MonoBehaviour
     {
+        private const float CardHeight = 130f;
+
         [SerializeField] private ScrollRect scrollRect;
-        [SerializeField] private Transform cardsRoot;
+        [SerializeField] private RectTransform cardsRoot;
         [SerializeField] private EmployeeCardView employeeCardPrefab;
         [SerializeField] private TMP_Text emptyText;
-        [SerializeField, Min(1)] private int batchSize = 20;
-        [SerializeField, Range(0.01f, 0.5f)] private float bottomThreshold = 0.1f;
 
-        private readonly List<EmployeeCardView> _cards = new List<EmployeeCardView>();
-        private readonly List<EmployeeData> _displayedEmployees = new List<EmployeeData>();
+        [SerializeField, Min(0f)] private float spacingBetweenItems = 20f;
+        [SerializeField, Min(0f)] private float topPadding = 250f;
+        [SerializeField, Min(0f)] private float bottomPadding = 250f;
+        [SerializeField, Min(0)] private int bufferSize = 2;
+
+        private readonly List<EmployeeCardView> _cardsViews = new();
+        private readonly List<EmployeeData> _displayedEmployees = new();
+
         private List<EmployeeData> _employees;
         private FavoritesService _favorites;
-        private AvatarService _avatars;
-        private int _nextEmployeeIndex;
-        private bool _isInitialized;
-        private bool _isLoading;
+        private AvatarService _avatarService;
+        private int _lastStartIndex = -1;
 
         public event Action<EmployeeData> OnProfileRequested;
 
@@ -36,66 +40,57 @@ namespace _Project.Code.UI.EmployeeList
 
         private void Awake()
         {
-            scrollRect.onValueChanged.AddListener(HandleScrollChanged);
+            scrollRect.onValueChanged.AddListener(OnScrollChanged);
         }
 
         private void OnDestroy()
         {
-            scrollRect.onValueChanged.RemoveListener(HandleScrollChanged);
+            scrollRect.onValueChanged.RemoveListener(OnScrollChanged);
+
             Dispose();
         }
 
-        public void Initialize(
-            List<EmployeeData> employees,
-            FavoritesService favorites,
-            AvatarService avatars)
+        public void Initialize(List<EmployeeData> employees, FavoritesService favorites, AvatarService avatars)
         {
             Dispose();
 
             _employees = employees;
             _favorites = favorites;
-            _avatars = avatars;
+            _avatarService = avatars;
             _favorites.OnFavoritesChanged += HandleFavoritesChanged;
-            _isInitialized = true;
+            // _isInitialized = true;
         }
 
         public void Dispose()
         {
             if (_favorites != null)
-            {
                 _favorites.OnFavoritesChanged -= HandleFavoritesChanged;
-            }
-
-            _favorites = null;
-            _avatars = null;
-            _employees = null;
-            _isInitialized = false;
-            ClearCards();
         }
 
         public void Show()
         {
-            if (!_isInitialized)
-            {
-                return;
-            }
-
-            if (_cards.Count == 0 || RebuildWhenShow)
-            {
-                Rebuild();
-            }
+            // if (!_isInitialized)
+            //     return;
 
             gameObject.SetActive(true);
+
+            if (_cardsViews.Count == 0 || RebuildWhenShow)
+                Rebuild();
         }
 
-        private void HandleScrollChanged(Vector2 position)
+        private void InitializeVirtualization()
         {
-            if (_isLoading || _nextEmployeeIndex >= _displayedEmployees.Count || position.y > bottomThreshold)
-            {
-                return;
-            }
+            float viewportHeight = scrollRect.viewport.rect.height;
+            float itemSpace = CardHeight + spacingBetweenItems;
+            int visibleCardCount = Mathf.Max(1, Mathf.CeilToInt((viewportHeight + spacingBetweenItems) / itemSpace));
+            int requiredCardCount = visibleCardCount + bufferSize * 2;
 
-            LoadNextBatch();
+            CreatePool(requiredCardCount);
+        }
+
+        private void OnScrollChanged(Vector2 position)
+        {
+            UpdateVisibleCards();
         }
 
         private void HandleFavoritesChanged()
@@ -103,94 +98,149 @@ namespace _Project.Code.UI.EmployeeList
             if (RebuildWhenFavoritesChanged)
             {
                 if (gameObject.activeInHierarchy)
-                {
                     Rebuild();
-                }
 
                 return;
             }
 
-            foreach (var card in _cards)
+            foreach (EmployeeCardView card in _cardsViews)
             {
-                card.SetFavoriteState(_favorites.IsFavorite(card.EmployeeId));
+                if (card.gameObject.activeSelf)
+                    card.SetFavoriteState(_favorites.IsFavorite(card.EmployeeId));
             }
         }
 
         private void Rebuild()
         {
-            ClearCards();
             CollectEmployees();
 
-            var isEmpty = _displayedEmployees.Count == 0;
-            emptyText.gameObject.SetActive(isEmpty);
-            scrollRect.gameObject.SetActive(!isEmpty);
+            bool isEmpty = _displayedEmployees.Count == 0;
+            if (emptyText != null)
+                emptyText.gameObject.SetActive(isEmpty);
+
+            ClearCards();
 
             if (isEmpty)
             {
                 return;
             }
 
-            LoadNextBatch();
+            InitializeVirtualization();
+            if (_cardsViews.Count == 0)
+            {
+                return;
+            }
+
+            UpdateContentHeight();
             scrollRect.verticalNormalizedPosition = 1f;
+            _lastStartIndex = -1;
+            UpdateVisibleCards(0);
+            // _isRebuilding = false;
         }
 
         private void CollectEmployees()
         {
             _displayedEmployees.Clear();
-            if (_employees == null)
-            {
-                return;
-            }
 
-            foreach (var employee in _employees)
+            foreach (EmployeeData employee in _employees)
             {
                 if (ShouldDisplay(employee))
-                {
                     _displayedEmployees.Add(employee);
-                }
             }
         }
 
-        private void LoadNextBatch()
+        private void CreatePool(int poolSize)
         {
-            _isLoading = true;
-            var endIndex = Mathf.Min(_nextEmployeeIndex + batchSize, _displayedEmployees.Count);
-
-            while (_nextEmployeeIndex < endIndex)
+            for (int i = 0; i < poolSize; i++)
             {
-                var employee = _displayedEmployees[_nextEmployeeIndex];
-                var card = Instantiate(employeeCardPrefab, cardsRoot);
-                card.Bind(employee,
-                    _avatars.GetSprite(employee.id),
-                    _favorites.IsFavorite(employee.id),
-                    HandleFavoriteRequested,
-                    HandleProfileRequested);
+                EmployeeCardView card = Instantiate(employeeCardPrefab, cardsRoot);
+                card.gameObject.SetActive(false);
+                _cardsViews.Add(card);
+            }
+        }
 
-                _cards.Add(card);
-                _nextEmployeeIndex++;
+        private void UpdateContentHeight()
+        {
+            RectTransform content = scrollRect.content;
+            float totalHeight = topPadding + bottomPadding;
+
+            if (_displayedEmployees.Count > 0)
+                totalHeight += _displayedEmployees.Count * CardHeight + (_displayedEmployees.Count - 1) * spacingBetweenItems;
+
+            content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, totalHeight);
+        }
+
+        private void UpdateVisibleCards(int forcedStartIndex = -1)
+        {
+            int firstVisibleIndex;
+            if (forcedStartIndex >= 0)
+            {
+                firstVisibleIndex = forcedStartIndex;
+            }
+            else
+            {
+                float scrollY = Mathf.Max(0f, scrollRect.content.anchoredPosition.y - topPadding);
+                firstVisibleIndex = Mathf.FloorToInt(scrollY / (CardHeight + spacingBetweenItems));
             }
 
-            _isLoading = false;
+            int startIndex = Mathf.Clamp(firstVisibleIndex - bufferSize, 0,
+                Mathf.Max(0, _displayedEmployees.Count - _cardsViews.Count));
+
+            if (startIndex == _lastStartIndex)
+                return;
+
+            _lastStartIndex = startIndex;
+
+            for (int i = 0; i < _cardsViews.Count; i++)
+            {
+                int employeeIndex = startIndex + i;
+                EmployeeCardView card = _cardsViews[i];
+
+                if (employeeIndex >= _displayedEmployees.Count)
+                {
+                    card.gameObject.SetActive(false);
+                    continue;
+                }
+
+                EmployeeData employee = _displayedEmployees[employeeIndex];
+                BindEmployeeToView(card, employee);
+
+                SetItemPosition(card, employeeIndex);
+                card.gameObject.SetActive(true);
+            }
+        }
+
+        private void SetItemPosition(EmployeeCardView card, int employeeIndex)
+        {
+            RectTransform rect = card.transform as RectTransform;
+            rect.anchoredPosition = new Vector2(0f, -(topPadding + employeeIndex * (CardHeight + spacingBetweenItems)));
+        }
+
+        private void BindEmployeeToView(EmployeeCardView card, EmployeeData employee)
+        {
+            card.Bind(
+                employee,
+                _avatarService?.GetSprite(employee.id),
+                _favorites != null && _favorites.IsFavorite(employee.id),
+                HandleFavoriteRequested,
+                HandleProfileRequested);
         }
 
         private void ClearCards()
         {
-            foreach (var card in _cards)
+            foreach (EmployeeCardView card in _cardsViews)
             {
                 if (card != null)
-                {
                     Destroy(card.gameObject);
-                }
             }
 
-            _cards.Clear();
-            _displayedEmployees.Clear();
-            _nextEmployeeIndex = 0;
+            _cardsViews.Clear();
+            _lastStartIndex = -1;
         }
 
         private void HandleFavoriteRequested(EmployeeData employee)
         {
-            _favorites.Toggle(employee.id);
+            _favorites?.Toggle(employee.id);
         }
 
         private void HandleProfileRequested(EmployeeData employee)

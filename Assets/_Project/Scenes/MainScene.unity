@@ -140,8 +140,10 @@ MonoBehaviour:
   cardsRoot: {fileID: 924020931}
   employeeCardPrefab: {fileID: 7455487970189123302, guid: fcbd7a3a3db2132418a33aff97862941, type: 3}
   emptyText: {fileID: 1955347504}
-  batchSize: 20
-  bottomThreshold: 0.1
+  spacingBetweenItems: 20
+  topPadding: 50
+  bottomPadding: 50
+  bufferSize: 2
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -508,8 +510,10 @@ MonoBehaviour:
   cardsRoot: {fileID: 707756924}
   employeeCardPrefab: {fileID: 7455487970189123302, guid: fcbd7a3a3db2132418a33aff97862941, type: 3}
   emptyText: {fileID: 719092184}
-  batchSize: 20
-  bottomThreshold: 0.1
+  spacingBetweenItems: 20
+  topPadding: 50
+  bottomPadding: 50
+  bufferSize: 2
 --- !u!114 &1955347504 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5434424161690620861, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
@@ -633,6 +637,14 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1436964448565187471, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -400
+      objectReference: {fileID: 0}
+    - target: {fileID: 1436964448565187471, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2130397594323750967, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
@@ -648,6 +660,14 @@ PrefabInstance:
     - target: {fileID: 6068191548525944483, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
       propertyPath: m_Name
       value: '*CANVAS*'
+      objectReference: {fileID: 0}
+    - target: {fileID: 6141698610086413549, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -400
+      objectReference: {fileID: 0}
+    - target: {fileID: 6141698610086413549, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6853387655141583619, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
       propertyPath: m_Pivot.x
@@ -736,6 +756,10 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 3269403983805768873, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
     - {fileID: 7752362145250849739, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+    - {fileID: 3904415736575825523, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+    - {fileID: 8409665989850255040, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+    - {fileID: 8135164183150706961, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
+    - {fileID: 3638784789371460002, guid: c834c342297766a40aa58ab03e61d1e7, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:

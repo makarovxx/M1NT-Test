@@ -70,7 +70,7 @@ namespace _Project.Code.UI.Navigation
             ShowList(EmployeeListScreen.Favorites);
         }
 
-        public void ShowList(EmployeeListScreen screen)
+        private void ShowList(EmployeeListScreen screen)
         {
             _currentListScreen = screen;
             var showFavorites = screen == EmployeeListScreen.Favorites;
